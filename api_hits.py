@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from file_parser import parse_file_to_string, user_details
-from main import generate_response_from_template, query_pinecone_with_prompt, classify_and_organize_user_info, create_tavus_conversation, chunk_and_embed_and_upsert
+from app import generate_response_from_template, query_pinecone_with_prompt, classify_and_organize_user_info, create_tavus_conversation, chunk_and_embed_and_upsert
 import uvicorn
 
 app = FastAPI()
