@@ -108,7 +108,7 @@ def create_tavus_conversation(conversational_context):
     }
     response = requests.post("https://tavusapi.com/v2/conversations", json=payload, headers=headers)
     response_data = json.loads(response.text)
-    print(response_data)
+    # print(response_data)
     return response_data.get("conversation_url", "No URL found")
 
 # Move the API routes from api_hits.py to main.py
