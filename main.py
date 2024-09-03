@@ -149,6 +149,11 @@ async def create_tavus_meeting():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+if __name__ == "__main__":
+    #chunk_and_embed_and_upsert(classify_and_organize_user_info(user_details)) 
+    # uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)
+
 # Main execution
 # if __name__ == "__main__":
 #     uvicorn.run(app, host="0.0.0.0", port=8000)    # # Process and upsert user details
