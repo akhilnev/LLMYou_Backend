@@ -152,7 +152,7 @@ async def create_tavus_meeting():
 if __name__ == "__main__":
     #chunk_and_embed_and_upsert(classify_and_organize_user_info(user_details)) 
     # uvicorn.run(app, host="0.0.0.0", port=8000)
-    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)
+    uvicorn.run(app)
 
 # Main execution
 # if __name__ == "__main__":
