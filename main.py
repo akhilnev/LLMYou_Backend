@@ -7,12 +7,14 @@ from textwrap import wrap
 import os
 import requests
 from testing import prompt
-from file_parser import user_details
 import json
+from fastapi import FastAPI, HTTPException
+from file_parser import parse_file_to_string, user_details
+import uvicorn
 
 # Initialize FastAPI app and load environment variables
-app = FastAPI()
 load_dotenv()
+app = FastAPI()
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -109,24 +111,62 @@ def create_tavus_conversation(conversational_context):
     print(response_data)
     return response_data.get("conversation_url", "No URL found")
 
+# Move the API routes from api_hits.py to main.py
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.post("/generate_response")
+async def generate_response(prompt: str):
+    try:
+        relevant_chunks = query_pinecone_with_prompt(prompt)
+        response = generate_response_from_template(prompt, relevant_chunks)
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/create_tavus_meeting")
+async def create_tavus_meeting():
+    try:
+        organized_user_details = classify_and_organize_user_info(user_details)
+        conversational_context = f"""
+        You are an AI assistant representing Akhil, a professional seeking career opportunities. Your role is to engage in a conversation with a recruiter, employer, or fellow student, providing accurate and relevant information about Akhil's background, skills, and experiences.
+
+        Guidelines:
+        1. Maintain a professional and friendly tone throughout the conversation.
+        2. Provide concise and relevant answers based on the information given.
+        3. If asked about something not in Akhil's provided information, politely state that you don't have that specific information.
+        4. Highlight Akhil's strengths and achievements when appropriate.
+        5. Be prepared to discuss Akhil's educational background, work experience, skills, and career goals.
+
+        Use only the following information about Akhil:
+        {organized_user_details}
+
+        Remember, your goal is to represent Akhil effectively and help the other party understand his qualifications and potential value to their organization or academic program.
+        """
+        tavus_response = create_tavus_conversation(conversational_context)
+        return {"meeting_link": tavus_response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Main execution
 if __name__ == "__main__":
-    # Process and upsert user details
-    chunk_and_embed_and_upsert(classify_and_organize_user_info(user_details))
+    uvicorn.run(app, host="0.0.0.0", port=8000)    # # Process and upsert user details
+    # chunk_and_embed_and_upsert(classify_and_organize_user_info(user_details))
 
-    # Generate response based on prompt
-    relevant_chunks = query_pinecone_with_prompt(prompt)
-    response = generate_response_from_template(prompt, relevant_chunks)
-    print(response)
+    # # Generate response based on prompt
+    # relevant_chunks = query_pinecone_with_prompt(prompt)
+    # response = generate_response_from_template(prompt, relevant_chunks)
+    # print(response)
 
-    # Classify and organize user info
-    organized_user_details = classify_and_organize_user_info(user_details)
+    # # Classify and organize user info
+    # organized_user_details = classify_and_organize_user_info(user_details)
     
-    # Create Tavus conversation
-    conversational_context = f"""
-    You are a helpful assistant with access to your owner's information who you advocate for. The owner's name for now is Akhil.
-    A recruiter/employer/fellow student has potentially asked you the following question about the user, and you need to help them understand more about Akhil and be adroit in your responses. Use only the following info which Akhil has provided about him:
-    {organized_user_details} 
-    """
-    tavus_response = create_tavus_conversation(conversational_context)
-    print(f"Join the link to the meeting here: {tavus_response}")
+    # # Create Tavus conversation
+    # conversational_context = f"""
+    # You are a helpful assistant with access to your owner's information who you advocate for. The owner's name for now is Akhil.
+    # A recruiter/employer/fellow student has potentially asked you the following question about the user, and you need to help them understand more about Akhil and be adroit in your responses. Use only the following info which Akhil has provided about him:
+    # {organized_user_details} 
+    # """
+    # tavus_response = create_tavus_conversation(conversational_context)
+    # print(f"Join the link to the meeting here: {tavus_response}")
